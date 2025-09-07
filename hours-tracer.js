@@ -1,100 +1,178 @@
-    const days = [
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
-    ];
+const days = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
-    const weeksContainer = document.getElementById("weeks-container");
-    const monthTotalEl = document.getElementById("month-total");
-    const weeklyBreakdown = document.getElementById("weekly-breakdown");
-    const addWeekBtn = document.getElementById("add-week");
-    const clearDataBtn = document.getElementById("clear-data");
+const weeksContainer = document.getElementById("weeks-container");
+const monthTotalEl = document.getElementById("month-total");
+const weeklyBreakdown = document.getElementById("weekly-breakdown");
+const addWeekBtn = document.getElementById("add-week");
+const clearDataBtn = document.getElementById("clear-data");
 
-    let weekCount = 0;
+let weekCount = 0;
 
-    function addNewWeek() {
-      weekCount++;
-      const weekId = `week-${weekCount}`;
+/* ---------- Helpers for time math (H.MM or H:MM) ---------- */
 
-      const weekCard = document.createElement("div");
-      weekCard.classList.add("section-card");
-      weekCard.setAttribute("id", weekId);
+// Parse strings like "7.34", "7:34", "7", "07:05"
+function parseHM(str) {
+  if (!str) return { h: 0, m: 0 };
+  let s = String(str).trim().replace(",", "."); // allow comma -> dot
+  if (!s) return { h: 0, m: 0 };
 
-      let weekHTML = `<h6 class="mb-3">📅 Week ${weekCount}</h6>`;
+  // colon format takes priority
+  if (s.includes(":")) {
+    const [h, m] = s.split(":");
+    return normalize({
+      h: safeInt(h),
+      m: safeInt(m),
+    });
+  }
 
-      days.forEach((day) => {
-        weekHTML += `
-          <div class="day-card">
-            <span class="day-label">${day}</span>
-            <input type="number" min="0" step="0.5" class="hours-input" data-week="${weekId}" value="0">
-            <span class="day-total">0.0h</span>
-          </div>
-        `;
-      });
+  // dot format "hh.mm" where mm are minutes (NOT decimal)
+  if (s.includes(".")) {
+    const [h, mRaw] = s.split(".");
+    // take at most 2 minute digits and treat as minutes (07.5 -> 07:5)
+    const m = safeInt((mRaw || "").slice(0, 2));
+    return normalize({ h: safeInt(h), m });
+  }
 
-      weekHTML += `
-        <div class="summary-box mt-3">
-          <h6>📊 Week ${weekCount} Total</h6>
-          <h5 id="${weekId}-total">0.0 hours</h5>
-        </div>
-      `;
+  // pure hours like "8"
+  return normalize({ h: safeInt(s), m: 0 });
+}
 
-      weekCard.innerHTML = weekHTML;
-      weeksContainer.appendChild(weekCard);
+// add two {h, m}
+function addHM(a, b) {
+  return normalize({ h: a.h + b.h, m: a.m + b.m });
+}
 
-      const breakdownItem = document.createElement("div");
-      breakdownItem.classList.add("day-card");
-      breakdownItem.innerHTML = `<span>Week ${weekCount}</span><span id="breakdown-${weekId}">0.0h</span>`;
-      weeklyBreakdown.appendChild(breakdownItem);
+// carry every 60 minutes into hours
+function normalize(t) {
+  let h = safeInt(t.h);
+  let m = safeInt(t.m);
+  if (m >= 60) {
+    h += Math.floor(m / 60);
+    m = m % 60;
+  }
+  if (m < 0) m = 0;
+  if (h < 0) h = 0;
+  return { h, m };
+}
 
-      const inputs = weekCard.querySelectorAll(".hours-input");
-      inputs.forEach((input) => {
-        input.addEventListener("input", () => updateTotals(weekId));
-      });
-    }
+function formatHM(t) {
+  return `${t.h}.${String(t.m).padStart(2, "0")}`;
+}
 
-    function updateTotals(weekId) {
-      const inputs = document.querySelectorAll(`#${weekId} .hours-input`);
-      let weekTotal = 0;
+function safeInt(v) {
+  const n = parseInt(v, 10);
+  return isNaN(n) ? 0 : n;
+}
 
-      inputs.forEach((input) => {
-        const hours = parseFloat(input.value) || 0;
-        input.nextElementSibling.textContent = hours.toFixed(1) + "h";
-        weekTotal += hours;
-      });
+/* ---------- UI builders & totals ---------- */
 
-      document.getElementById(`${weekId}-total`).textContent =
-        weekTotal.toFixed(1) + " hours";
-      document.getElementById(`breakdown-${weekId}`).textContent =
-        weekTotal.toFixed(1) + "h";
+function addNewWeek() {
+  weekCount++;
+  const weekId = `week-${weekCount}`;
 
-      updateMonthlyTotal();
-    }
+  const weekCard = document.createElement("div");
+  weekCard.classList.add("section-card");
+  weekCard.setAttribute("id", weekId);
 
-    function updateMonthlyTotal() {
-      let monthTotal = 0;
-      for (let i = 1; i <= weekCount; i++) {
-        const weekTotalEl = document.getElementById(`week-${i}-total`);
-        if (weekTotalEl) {
-          monthTotal += parseFloat(weekTotalEl.textContent) || 0;
-        }
-      }
-      monthTotalEl.textContent = monthTotal.toFixed(1) + " hours";
-    }
+  let weekHTML = `<h6 class="mb-3">📅 Week ${weekCount}</h6>`;
 
-    function clearAllData() {
-      weeksContainer.innerHTML = "";
-      weeklyBreakdown.innerHTML = "";
-      monthTotalEl.textContent = "0.0 hours";
-      weekCount = 0;
-    }
+  days.forEach((day) => {
+    weekHTML += `
+      <div class="day-card">
+        <span class="day-label">${day}</span>
+        <input
+          type="text"
+          inputmode="numeric"
+          pattern="\\d{1,2}([:\\.]\\d{1,2})?"
+          placeholder="hh.mm or hh:mm"
+          class="hours-input"
+          data-week="${weekId}"
+          value="0"
+        />
+        <span class="day-total">0.00h</span>
+      </div>
+    `;
+  });
 
-    addWeekBtn.addEventListener("click", addNewWeek);
-    clearDataBtn.addEventListener("click", clearAllData);
+  weekHTML += `
+    <div class="summary-box mt-3">
+      <h6>📊 Week ${weekCount} Total</h6>
+      <h5 id="${weekId}-total">0.00 hours</h5>
+    </div>
+  `;
 
-    addNewWeek();
-  
+  weekCard.innerHTML = weekHTML;
+  weeksContainer.appendChild(weekCard);
+
+  // Weekly breakdown row
+  const breakdownItem = document.createElement("div");
+  breakdownItem.classList.add("day-card");
+  breakdownItem.innerHTML = `<span>Week ${weekCount}</span><span id="breakdown-${weekId}">0.00h</span>`;
+  weeklyBreakdown.appendChild(breakdownItem);
+
+  // Attach input listeners
+  const inputs = weekCard.querySelectorAll(".hours-input");
+  inputs.forEach((input) => {
+    input.addEventListener("input", () => updateTotals(weekId));
+  });
+  updateTotals(weekId); // initialize totals
+}
+
+function updateTotals(weekId) {
+  const weekEl = document.getElementById(weekId);
+  const inputs = weekEl.querySelectorAll(".hours-input");
+
+  // sum this week
+  let weekTotal = { h: 0, m: 0 };
+  inputs.forEach((input) => {
+    const t = parseHM(input.value);
+    // show normalized per-day value to the right
+    const label = input.parentElement.querySelector(".day-total");
+    if (label) label.textContent = `${formatHM(t)}h`;
+    weekTotal = addHM(weekTotal, t);
+  });
+
+  // update week total + breakdown
+  document.getElementById(`${weekId}-total`).textContent = `${formatHM(
+    weekTotal
+  )} hours`;
+  document.getElementById(`breakdown-${weekId}`).textContent = `${formatHM(
+    weekTotal
+  )}h`;
+
+  // update month
+  updateMonthlyTotal();
+}
+
+function updateMonthlyTotal() {
+  // sum across every input in the document
+  const inputs = document.querySelectorAll(".hours-input");
+  let monthTotal = { h: 0, m: 0 };
+
+  inputs.forEach((input) => {
+    monthTotal = addHM(monthTotal, parseHM(input.value));
+  });
+
+  monthTotalEl.textContent = `${formatHM(monthTotal)} hours`;
+}
+
+function clearAllData() {
+  weeksContainer.innerHTML = "";
+  weeklyBreakdown.innerHTML = "";
+  monthTotalEl.textContent = "0.00 hours";
+  weekCount = 0;
+}
+
+addWeekBtn.addEventListener("click", addNewWeek);
+clearDataBtn.addEventListener("click", clearAllData);
+
+// start with one week
+addNewWeek();
