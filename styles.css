@@ -1,0 +1,90 @@
+    body {
+      background: #fdf6f0;
+      font-family: "Comic Sans MS", cursive, sans-serif;
+    }
+
+    .section-card {
+      border-radius: 20px;
+      background: #fffbea;
+      padding: 20px;
+      box-shadow: 4px 4px 0px #00000020;
+      margin-bottom: 20px;
+      border: 3px solid #ffb347;
+    }
+
+    .day-card {
+      border: 2px dashed #ffd166;
+      border-radius: 15px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      background: #fff;
+      transition: 0.2s;
+    }
+
+    .day-card:hover {
+      background: #fff3cd;
+      transform: scale(1.02);
+    }
+
+    .day-label {
+      flex: 1;
+      font-weight: bold;
+    }
+
+    .hours-input {
+      width: 120px;
+      padding: 5px 10px;
+      border-radius: 10px;
+      border: 2px solid #ffd166;
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    .day-total {
+      min-width: 60px;
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .btn-custom {
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .summary-box {
+      background: #caffbf;
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      border: 3px solid #80ed99;
+    }
+
+    .fun-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #ff6b6b;
+    }
+
+    input[type="number"] {
+      width: 80px;
+      border-radius: 10px;
+      border: 2px solid #ffd166;
+      text-align: center;
+    }
+
+    footer {
+      margin-top: 30px;
+      padding: 15px;
+      text-align: center;
+      background: #ffeaa7;
+      border-top: 3px solid #fab1a0;
+      border-radius: 15px 15px 0 0;
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #2d3436;
+    }
+  
